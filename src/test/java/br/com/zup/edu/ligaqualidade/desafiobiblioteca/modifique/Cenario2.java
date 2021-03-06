@@ -2,7 +2,9 @@ package br.com.zup.edu.ligaqualidade.desafiobiblioteca.modifique;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -127,11 +129,14 @@ public class Cenario2 {
 				.map(r -> r.idExemplar).collect(Collectors.toList());
 		List<Integer> idsExemplaresEsperados = exemplares.stream()
 				.map(e -> e.idExemplar).collect(Collectors.toList());
+
+		Collections.sort(idsExemplaresRetornados);
+		Collections.sort(idsExemplaresEsperados);
 		Assertions.assertEquals(idsExemplaresEsperados,
 				idsExemplaresRetornados);
 
-		List<Integer> idsUsuariosRetornados = resultados.stream()
-				.map(r -> r.idUsuario).collect(Collectors.toList());
+		List<Integer> idsUsuariosRetornados = new ArrayList<>(resultados.stream()
+				.map(r -> r.idUsuario).collect(Collectors.toSet()));
 		List<Integer> idsUsuariosEsperados = usuarios.stream()
 				.map(u -> u.idUsuario).collect(Collectors.toList());
 		Assertions.assertEquals(idsUsuariosEsperados, idsUsuariosRetornados);
