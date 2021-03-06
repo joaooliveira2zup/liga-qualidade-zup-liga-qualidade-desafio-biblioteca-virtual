@@ -1,6 +1,7 @@
 package br.com.zup.edu.ligaqualidade.desafiobiblioteca.modifique;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.Set;
 
 import br.com.zup.edu.ligaqualidade.desafiobiblioteca.DadosDevolucao;
@@ -24,19 +25,41 @@ public class Solucao {
 	/**
 	 * 
 	 * @param livros dados necessários dos livros
-	 * @param exemplares tipos de exemplares para cada livro
-	 * @param usuarios tipos de usuarios
-	 * @param emprestimos informações de pedidos de empréstimos
-	 * @param devolucoes informações de devoluções, caso exista. 
+	 * @param dadosExemplares tipos de dadosExemplares para cada livro
+	 * @param dadosUsuarios tipos de dadosUsuarios
+	 * @param dadosEmprestimos informações de pedidos de empréstimos
+	 * @param dadosDevolucoes informações de devoluções, caso exista.
 	 * @param dataParaSerConsideradaNaExpiracao aqui é a data que deve ser utilizada para verificar expiração
 	 * @return
 	 */
 	public static Set<EmprestimoConcedido> executa(Set<DadosLivro> livros,
-			Set<DadosExemplar> exemplares,
-			Set<DadosUsuario> usuarios, Set<DadosEmprestimo> emprestimos,
-			Set<DadosDevolucao> devolucoes, LocalDate dataParaSerConsideradaNaExpiracao) {
-		
-		return Set.of();
+			Set<DadosExemplar> dadosExemplares,
+			Set<DadosUsuario> dadosUsuarios, Set<DadosEmprestimo> dadosEmprestimos,
+			Set<DadosDevolucao> dadosDevolucoes, LocalDate dataParaSerConsideradaNaExpiracao) {
+
+		Set<EmprestimoConcedido> emprestimosRealizados = new HashSet<>();
+		for(DadosLivro livro : livros){
+			DadosExemplar exemplar = dadosExemplares.stream().filter( exemp -> exemp.idLivro == livro.id).findFirst().orElse(null);
+			DadosEmprestimo emprestimo = dadosEmprestimos.stream().filter( emp -> emp.idLivro == livro.id).findFirst().orElse(null);
+			DadosUsuario usuario = emprestimo != null ? dadosUsuarios.stream().filter(usr -> usr.idUsuario == emprestimo.idUsuario).findFirst().orElse(null) : null;
+
+			LocalDate dataDevolucao = DataPrevisaoService.getDataPrevistaDevolucao(usuario, exemplar, dataParaSerConsideradaNaExpiracao);
+
+			if( nothingIsNull(exemplar, dataDevolucao, emprestimo, usuario) && isTempoExcedente(emprestimo.tempo) && emprestimosRealizados.size() <= 5) {
+				EmprestimoConcedido emprestimoRealizado = new EmprestimoConcedido(usuario.idUsuario, exemplar.idExemplar, dataDevolucao);
+				emprestimosRealizados.add(emprestimoRealizado);
+			}
+		}
+
+		return emprestimosRealizados;
+	}
+
+	private static boolean nothingIsNull( DadosExemplar exemplar, LocalDate dataDevolucao, DadosEmprestimo dadosEmprestimo, DadosUsuario usuario){
+		return dataDevolucao != null && exemplar != null  && dadosEmprestimo != null && usuario != null;
+	}
+
+	private static boolean isTempoExcedente(int tempo){
+		return tempo <= 60;
 	}
 
 }
